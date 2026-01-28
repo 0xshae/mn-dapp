@@ -41,6 +41,17 @@ export class TestnetLocalConfig implements Config {
   }
 }
 
+export class UndeployedLocalConfig implements Config {
+  logDir = path.resolve(currentDir, '..', 'logs', 'undeployed-local', `${new Date().toISOString()}.log`);
+  indexer = 'http://127.0.0.1:8088/api/v1/graphql';
+  indexerWS = 'ws://127.0.0.1:8088/api/v1/graphql/ws';
+  node = 'http://127.0.0.1:9944';
+  proofServer = 'http://127.0.0.1:6300';
+  constructor() {
+    setNetworkId(NetworkId.Undeployed);
+  }
+}
+
 export class StandaloneConfig implements Config {
   logDir = path.resolve(currentDir, '..', 'logs', 'standalone', `${new Date().toISOString()}.log`);
   indexer = 'http://127.0.0.1:8088/api/v1/graphql';
