@@ -13,14 +13,15 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+import { type Resource } from '@midnight-ntwrk/wallet';
+import { type Wallet } from '@midnight-ntwrk/wallet-api';
 import { stdin as input, stdout as output } from 'node:process';
 import { createInterface, type Interface } from 'node:readline/promises';
 import { type Logger } from 'pino';
 import { type StartedDockerComposeEnvironment, type DockerComposeEnvironment } from 'testcontainers';
 import { type CounterProviders, type DeployedCounterContract } from './common-types';
-import { type Config, StandaloneConfig, UndeployedLocalConfig } from './config';
+import { type Config, StandaloneConfig } from './config';
 import * as api from './api';
-import { type WalletInstance } from './api';
 
 let logger: Logger;
 
@@ -89,25 +90,22 @@ const mainLoop = async (providers: CounterProviders, rli: Interface): Promise<vo
   }
 };
 
-const buildWalletFromSeed = async (config: Config, rli: Interface): Promise<WalletInstance> => {
-  const seed = await rli.question('Enter your wallet seed (hex or mnemonic): ');
-  return await api.buildWalletAndWaitForFunds(config, seed);
+const buildWalletFromSeed = async (config: Config, rli: Interface): Promise<Wallet & Resource> => {
+  const seed = await rli.question('Enter your wallet seed: ');
+  return await api.buildWalletAndWaitForFunds(config, seed, '');
 };
 
 const WALLET_LOOP_QUESTION = `
 You can do one of the following:
   1. Build a fresh wallet
-  2. Build wallet from a seed (hex or mnemonic)
-  3. Use genesis seed (for local undeployed network)
-  4. Exit
+  2. Build wallet from a seed
+  3. Exit
 Which would you like to do? `;
 
-const buildWallet = async (config: Config, rli: Interface): Promise<WalletInstance | null> => {
-  // For standalone config, automatically use genesis seed
+const buildWallet = async (config: Config, rli: Interface): Promise<(Wallet & Resource) | null> => {
   if (config instanceof StandaloneConfig) {
-    return await api.buildWalletAndWaitForFunds(config, GENESIS_MINT_WALLET_SEED);
+    return await api.buildWalletAndWaitForFunds(config, GENESIS_MINT_WALLET_SEED, '');
   }
-
   while (true) {
     const choice = await rli.question(WALLET_LOOP_QUESTION);
     switch (choice) {
@@ -116,10 +114,6 @@ const buildWallet = async (config: Config, rli: Interface): Promise<WalletInstan
       case '2':
         return await buildWalletFromSeed(config, rli);
       case '3':
-        // Use genesis seed - works for local undeployed networks
-        logger.info('Using genesis seed for local network...');
-        return await api.buildWalletAndWaitForFunds(config, GENESIS_MINT_WALLET_SEED);
-      case '4':
         logger.info('Exiting...');
         return null;
       default:
@@ -152,10 +146,10 @@ export const run = async (config: Config, _logger: Logger, dockerEnv?: DockerCom
       config.proofServer = mapContainerPort(env, config.proofServer, 'counter-proof-server');
     }
   }
-  const walletInstance = await buildWallet(config, rli);
+  const wallet = await buildWallet(config, rli);
   try {
-    if (walletInstance !== null) {
-      const providers = await api.configureProviders(walletInstance, config);
+    if (wallet !== null) {
+      const providers = await api.configureProviders(wallet, config);
       await mainLoop(providers, rli);
     }
   } catch (e) {
@@ -174,8 +168,8 @@ export const run = async (config: Config, _logger: Logger, dockerEnv?: DockerCom
       logger.error(`Error closing readline interface: ${e}`);
     } finally {
       try {
-        if (walletInstance !== null) {
-          await api.closeWallet(walletInstance);
+        if (wallet !== null) {
+          await wallet.close();
         }
       } catch (e) {
         logger.error(`Error closing wallet: ${e}`);
