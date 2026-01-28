@@ -165,8 +165,8 @@ export const createWalletAndMidnightProvider = async (
   );
 
   // Get public keys as hex strings (what the old API expected)
-  const coinPublicKey = state.shielded.coinPublicKey.toString();
-  const encryptionPublicKey = state.shielded.encryptionPublicKey.toString();
+  const coinPublicKey = state.shielded.coinPublicKey.toHexString();
+  const encryptionPublicKey = state.shielded.encryptionPublicKey.toHexString();
 
   return {
     getCoinPublicKey() {
