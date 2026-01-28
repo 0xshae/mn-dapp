@@ -13,9 +13,10 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+import { type Resource } from '@midnight-ntwrk/wallet';
+import { type Wallet } from '@midnight-ntwrk/wallet-api';
 import path from 'path';
 import * as api from '../api';
-import { type WalletInstance } from '../api';
 import { type CounterProviders } from '../common-types';
 import { currentDir } from '../config';
 import { createLogger } from '../logger-utils';
@@ -27,7 +28,7 @@ const logger = await createLogger(logDir);
 
 describe('API', () => {
   let testEnvironment: TestEnvironment;
-  let walletInstance: WalletInstance;
+  let wallet: Wallet & Resource;
   let providers: CounterProviders;
 
   beforeAll(
@@ -35,13 +36,14 @@ describe('API', () => {
       api.setLogger(logger);
       testEnvironment = new TestEnvironment(logger);
       const testConfiguration = await testEnvironment.start();
-      walletInstance = await testEnvironment.getWallet();
-      providers = await api.configureProviders(walletInstance, testConfiguration.dappConfig);
+      wallet = await testEnvironment.getWallet();
+      providers = await api.configureProviders(wallet, testConfiguration.dappConfig);
     },
     1000 * 60 * 45,
   );
 
   afterAll(async () => {
+    await testEnvironment.saveWalletCache();
     await testEnvironment.shutdown();
   });
 
