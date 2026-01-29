@@ -23,7 +23,7 @@
   },
   "dependencies": {
     "@midnight-ntwrk/compact-runtime": "^0.9.0",
-    "@midnight-ntwrk/onchain-runtime-v1": "1.0.0-alpha.5",
+    "@midnight-ntwrk/onchain-runtime-v1": "1.0.0-rc.3",
     "@midnight-ntwrk/ledger-v6": "6.1.0-alpha.6",
     "@midnight-ntwrk/midnight-js-contracts": "3.0.0-alpha.11",
     "@midnight-ntwrk/midnight-js-http-client-proof-provider": "3.0.0-alpha.11",
